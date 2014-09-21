@@ -1,5 +1,5 @@
 /*global CodeMirror, device, FastClick*/
-import createTouchEditor from 'ghost/assets/lib/touch-editor';
+import createTouchEditor from 'ghost/utils/touch-editor';
 
 var setupMobileCodeMirror,
     TouchEditor,

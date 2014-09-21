@@ -1,3 +1,6 @@
+//createTouchEditor is a hack for obliterating
+//the codemirror `fromTextArea` method to keep
+//codemirror functional on small screen touch devices
 var createTouchEditor = function createTouchEditor() {
     var noop = function () {},
         TouchEditor;
