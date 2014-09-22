@@ -52,25 +52,6 @@ UploadUi = function ($dropzone, settings) {
 
             $dropzone.find('.js-fileupload').fileupload().fileupload('option', {
                 url: Ghost.apiRoot + '/uploads/',
-                add: function (e, data) {
-                    /*jshint unused:false*/
-                    $('.js-button-accept').prop('disabled', true);
-                    $dropzone.find('.js-fileupload').removeClass('right');
-                    $dropzone.find('.js-url').remove();
-                    $progress.find('.js-upload-progress-bar').removeClass('fail');
-                    $dropzone.trigger('uploadstart', [$dropzone.attr('id')]);
-                    $dropzone.find('span.media, div.description, a.image-url, a.image-webcam')
-                        .animate({opacity: 0}, 250, function () {
-                            $dropzone.find('div.description').hide().css({'opacity': 100});
-                            if (settings.progressBar) {
-                                $dropzone.find('div.js-fail').after($progress);
-                                $progress.animate({opacity: 100}, 250);
-                            }
-                        //only after all this flourishing should
-                        // the file actually be sent!? WAI U WAIT BRO
-                            data.submit();
-                        });
-                },
                 dropZone: settings.fileStorage ? $dropzone : null,
                 progressall: function (e, data) {
                     /*jshint unused:false*/
@@ -215,41 +196,12 @@ var PostImageUploader = Ember.Component.extend({
             $dropzone = this.$();
         return {
             url: Ghost.apiRoot + '/uploads/',
-            add: function (e, data) {
-                /*jshint unused:false*/
-                /*
-                invoked as soon as files are added to the fileupload widget
-                  via file input selection, drag & drop or api call
-                  ref https://github.com/blueimp/jQuery-File-Upload/wiki/Options#add
-                */
-                //Transition to "uploading" state?
-                $('.js-button-accept').prop('disabled', true);
-                $dropzone.find('.js-fileupload').removeClass('right');
-                $dropzone.find('.js-url').remove();
-                $progress.find('.js-upload-progress-bar').removeClass('fail');
-                //WTF is this event
-                $dropzone.trigger('uploadstart', [$dropzone.attr('id')]);
-                //Fade out whatever media buttons are out there..
-                $dropzone.find('span.media, div.description, a.image-url, a.image-webcam')
-                    .animate({opacity: 0}, 250, function () {
-                    // Hide it but make it visible?! WTF
-                        $dropzone.find('div.description').hide().css({'opacity': 100});
-                        if (settings.progressbar) {
-                            $dropzone.find('div.js-fail').after($progress);
-                            $progress.animate({opacity: 100}, 250);
-                        }
-
-                        //only after all this flourishing should
-                        // the file actually be sent!? WAI U WAIT BRO
-                        data.submit();
-                    });
-            },
-
             //Only files dragged to the element should be uploaded;
             // you can't just drag to the window
             // for some reason this depends on fileStorage???
             dropZone: settings.fileStorage ? $dropzone : null,
 
+            add: this.get('fileAddedHandler'),
             //Callback for global upload progress events
             //update the progress bar
             progressall: function (e, data) {
@@ -294,72 +246,61 @@ var PostImageUploader = Ember.Component.extend({
             self = this,
             $this = this.$(),
             imageSrc = this.get('image'),
-            ui = new UploadUi($this, options);
+            ui;
+
+        ui = new UploadUi($this, options);
         this.set('ui', ui);
+
         if (imageSrc) {
             ui.initWithImage();
         } else {
             //bind file upload
             $this.find('.js-fileupload').fileupload(this.createFileUploadOptions());
-            //swap to a url view if not backed with filestorage
-            if (this.get('uploadWithUrl')) {
-                this.initUrl();
-            }
 
         }
 
         $this.on('uploadsuccess', function (event, result) {
-            if (result && result !== '' && result !== 'http://') {
+            if (result && result !== 'http://') {
                 self.sendAction('uploaded', result);
             }
         });
-
-        $this.find('.js-cancel').on('click', function () {
-            self.sendAction('canceled');
-        });
     }.on('didInsertElement'),
 
-    initUrl: function () {
-        //?? TODO
-        //context: UI
-        var ui = this.get('ui'), val;
-        this.reset(); //@TODO
-        $dropzone.addClass('image-uploader-url').removeClass('pre-image-uploader');
-        $dropzone.find('.js-fileupload').addClass('right');
-        if (settings.fileStorage) {
-            $dropzone.append($cancel);
-        }
+    /**
+    fileupload event handlers
+    **/
 
-        $dropzone.find('div.description').before($url);
-
-        if (settings.editor) {
-            $dropzone.find('div.js-url').append('<button class="btn btn-blue js-button-accept">Save</button>');
-        }
-
-        $dropzone.find('.js-button-accept').on('click', function () {
-            val = $dropzone.find('.js-upload-url').val();
-            $dropzone.find('div.description').hide();
-            $dropzone.find('.js-fileupload').removeClass('right');
-            $dropzone.find('.js-url').remove();
-            if (val === '') {
-                $dropzone.trigger('uploadsuccess', 'http://');
-                self.initWithDropzone();
-            } else {
-                self.complete(val);
-            }
-        });
-
-        // Only show the toggle icon if there is a dropzone mode to go back to
-        if (settings.fileStorage !== false) {
-            $dropzone.append('<a class="image-upload" title="Add image"><span class="hidden">Upload</span></a>');
-        }
-
-        $dropzone.find('a.image-upload').on('click', function () {
-            $dropzone.find('.js-url').remove();
-            $dropzone.find('.js-fileupload').removeClass('right');
-            self.initWithDropzone();
-        });
+    bindHandler: function (handler) {
+        var handlerFunc = this.get(handler);
+        this.set(handler, _.bind(handlerFunc, this));
     },
+
+    fileQueuedHandler: function (event, data) {
+        var $dropzone = this.$();
+        /*jshint unused:false*/
+        this.set('uploading', true);
+        //$('.js-button-accept').prop('disabled', true);
+        //$dropzone.find('.js-fileupload').removeClass('right');
+        //$dropzone.find('.js-url').remove();
+        //$progress.find('.js-upload-progress-bar').removeClass('fail');
+        this.send('uploadStart');
+        //$dropzone.trigger('uploadstart', [$dropzone.attr('id')]);
+        $dropzone.find('span.media, div.description, a.image-url, a.image-webcam')
+            .animate({opacity: 0}, 250, function () {
+                $dropzone.find('div.description').hide().css({'opacity': 1});
+                if (settings.progressBar) {
+                    //@todo
+                    //$dropzone.find('div.js-fail').after($progress);
+                    //$progress.animate({opacity: 1}, 250);
+                }
+            //only after all this flourishing should
+            // the file actually be sent!? WAI U WAIT BRO
+                data.submit();
+            });
+    },
+    bindFileQueuedHandler: function () {
+        this.bindHandler('fileQueuedHandler');
+    }.on('init'),
 
     removeListeners: function () {
         var $this = this.$();
@@ -371,6 +312,9 @@ var PostImageUploader = Ember.Component.extend({
         toggleUploadMethod: function () {
             var method = this.get('uploadWithUrl') ? 'dropzone' : 'url';
             this.set('uploadMethod', method);
+        },
+        canceled: function () {
+            this.sendAction('canceled');
         }
     }
 });

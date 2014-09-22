@@ -17,7 +17,7 @@
 <input type="file" name="uploadimage" {{bind-attr class="uploadWithUrl:right :js-fileupload :main :fileupload"}}>
 <!---- bottom buttons ------>
 <!-- delete a button -->
-<a class="image-cancel js-cancel" title="Delete"><span class="hidden">Delete</span></a>
+<a class="image-cancel js-cancel" title="Delete" {{action "canceled"}}><span class="hidden">Delete</span></a>
 <!---- state swapper ---->
 
 <a {{action "toggleUploadMethod"}} {{bind-attr class="uploadWithUrl:image-upload uploadWithDropzone:image-url" title=actionTitle}}>
