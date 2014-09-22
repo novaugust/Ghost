@@ -1,6 +1,37 @@
+
+<!---- heading ------>
+
+{{#if uploadWithUrl}}
+<div class="js-url">
+    <input class="url js-upload-url" type="url" placeholder="http://">
+    <button class="btn btn-blue js-button-accept">Save</button>
+</div>
+{{else}}
+<img class="js-upload-target" {{bind-attr src=image}}>
 <span class="media">
     <span class="hidden">Image Upload</span>
 </span>
-<img class="js-upload-target" {{bind-attr src=image}}>
-<div class="description">Add post image <strong></strong></div>
-<input data-url="upload" class="js-fileupload main fileupload" type="file" name="uploadimage">
+{{/if}}
+
+<div class="description">Add image</div>
+<input type="file" name="uploadimage" {{bind-attr class="uploadWithUrl:right :js-fileupload :main :fileupload"}}>
+<!---- bottom buttons ------>
+<!-- delete a button -->
+<a class="image-cancel js-cancel" title="Delete"><span class="hidden">Delete</span></a>
+<!---- state swapper ---->
+
+<a {{action "toggleUploadMethod"}} {{bind-attr class="uploadWithUrl:image-upload uploadWithDropzone:image-url" title=actionTitle}}>
+    <span class="hidden">{{#if uploadWithUrl}}Upload{{else}}URL{{/if}}</span>
+</a>
+
+
+{{#if uploading}}
+<!-- animate the prgoress bar's opacity upon insertion, `$progress.animate({opacity: 100}, 250);` -->
+<div class="js-upload-progress progress progress-success active" aria-valuemin="0" aria-valuemax="100" role="progressBar">
+    <div class="js-upload-progress-bar bar" style="width:0%"></div>
+</div>
+{{/if}}
+{{#if failed}}
+<div class="js-fail failed" style="display: none">Something went wrong :(</div>
+<button class="js-fail btn btn-green" style="display: none">Try Again</button>
+{{/if}}
