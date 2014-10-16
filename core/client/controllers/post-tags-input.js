@@ -79,7 +79,6 @@ var PostTagsInputController = Ember.Controller.extend({
         deleteTag: function (tag) {
             this.get('tags').removeObject(tag);
             this.get('tagEnteredOrder').removeObject(tag.get('name'));
-            $('#tags').focus();
         },
 
         deleteLastTag: function () {
